@@ -262,7 +262,7 @@
       "subject": "MBFI",
       "section": null,
       "room": "A-1",
-      "faculty": null,
+      "faculty": "SVI",
       "raw": "MBFI (SVI) A-1",
       "day": "Tuesday",
       "slotIdx": 4
@@ -550,7 +550,7 @@
       "subject": "CRBV",
       "section": null,
       "room": "G-11",
-      "faculty": null,
+      "faculty": "AD",
       "raw": "CRBV (AD) G-11",
       "day": "Thursday",
       "slotIdx": 3
@@ -568,7 +568,7 @@
       "subject": "MBFI",
       "section": null,
       "room": "A-1",
-      "faculty": null,
+      "faculty": "SVI",
       "raw": "MBFI (SVI) A-1",
       "day": "Thursday",
       "slotIdx": 4
