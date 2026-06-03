@@ -219,9 +219,8 @@ function Index() {
             </div>
 
             <p className="mt-4 text-xs text-muted-foreground">
-              Room codes: G = Gurukula · L = Lakshya · A-1 = Auditorium (1st
-              Floor) · N = Naagar · CC = Computer Centre. Faculty shown as
-              initials.
+              This timetable is auto-generated — please cross-check with the
+              official notice board for accuracy.
             </p>
           </section>
         )}
