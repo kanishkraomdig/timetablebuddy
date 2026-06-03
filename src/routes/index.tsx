@@ -130,6 +130,10 @@ function Index() {
 
         {student && (
           <section className="mt-8">
+            <p className="mb-3 text-xs text-amber-600 dark:text-amber-400 font-medium">
+              ⚠️ This timetable is auto-generated — please cross-check with the
+              official notice board.
+            </p>
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold">{student.name}</h2>
