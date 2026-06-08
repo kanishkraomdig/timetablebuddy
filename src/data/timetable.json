@@ -107,9 +107,9 @@
   },
   {
    "subject": "NMS",
-   "section": null,
+   "section": "C",
    "room": "G-14",
-   "faculty": "C",
+   "faculty": null,
    "raw": "NMS G-14 (C)",
    "day": "Monday",
    "slotIdx": 2
