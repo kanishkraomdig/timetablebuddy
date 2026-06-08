@@ -54,6 +54,8 @@ function Index() {
       const sec = enrolled.get(s.subject);
       if (!sec) return false;
       if (sec === "ALL") return true;
+      // Session has no section in TT → single class for everyone enrolled
+      if (!s.section) return true;
       return s.section === sec;
     });
   }, [student]);
