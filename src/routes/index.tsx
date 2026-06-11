@@ -46,6 +46,39 @@ function Index() {
 
   const student = roll ? data.students[roll] : null;
 
+  const downloadSubjectRollList = () => {
+    const targetRolls = [
+      "25P007",
+      "25P109",
+      "25P171",
+      "25P233",
+      "25P260",
+      "25P325",
+    ];
+    const subjectToRolls = new Map<string, string[]>();
+    for (const r of targetRolls) {
+      const s = data.students[r];
+      if (!s) continue;
+      for (const e of s.enrollments) {
+        if (!subjectToRolls.has(e.subject)) subjectToRolls.set(e.subject, []);
+        subjectToRolls.get(e.subject)!.push(r);
+      }
+    }
+    const rows = ["Subject Name,Roll No Found"];
+    const subjects = Array.from(subjectToRolls.keys()).sort();
+    for (const sub of subjects) {
+      const name = data.subjectNames[sub] ?? sub;
+      rows.push(`"${sub} - ${name}","${subjectToRolls.get(sub)!.join("/")}"`);
+    }
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "subject-rolls.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const mySessions = useMemo(() => {
     if (!student) return [];
     const enrolled = new Map<string, string>();
@@ -119,6 +152,13 @@ function Index() {
             className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
           >
             Show my timetable
+          </button>
+          <button
+            type="button"
+            onClick={downloadSubjectRollList}
+            className="rounded-md border border-border bg-secondary px-5 py-2 text-sm font-semibold text-secondary-foreground transition hover:opacity-90"
+          >
+            Download subject roll list
           </button>
         </form>
 
