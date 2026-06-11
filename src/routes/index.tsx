@@ -55,26 +55,29 @@ function Index() {
       "25P260",
       "25P325",
     ];
-    const subjectToRolls = new Map<string, string[]>();
+    const sectionToRolls = new Map<string, string[]>();
     for (const r of targetRolls) {
       const s = data.students[r];
       if (!s) continue;
       for (const e of s.enrollments) {
-        if (!subjectToRolls.has(e.subject)) subjectToRolls.set(e.subject, []);
-        subjectToRolls.get(e.subject)!.push(r);
+        const key = `${e.subject}|${e.section}`;
+        if (!sectionToRolls.has(key)) sectionToRolls.set(key, []);
+        sectionToRolls.get(key)!.push(r);
       }
     }
-    const rows = ["Subject Name,Roll No Found"];
-    const subjects = Array.from(subjectToRolls.keys()).sort();
-    for (const sub of subjects) {
-      const name = data.subjectNames[sub] ?? sub;
-      rows.push(`"${sub} - ${name}","${subjectToRolls.get(sub)!.join("/")}"`);
+    const rows = ["Subject Name,Section,Roll No Found"];
+    const keys = Array.from(sectionToRolls.keys()).sort();
+    for (const key of keys) {
+      const [subject, section] = key.split("|");
+      const name = data.subjectNames[subject] ?? subject;
+      const sectionLabel = section === "ALL" ? "ALL" : `Sec ${section}`;
+      rows.push(`"${subject} - ${name}","${sectionLabel}","${sectionToRolls.get(key)!.join(" / ")}"`);
     }
     const blob = new Blob([rows.join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "subject-rolls.csv";
+    a.download = "subject-section-rolls.csv";
     a.click();
     URL.revokeObjectURL(url);
   };
