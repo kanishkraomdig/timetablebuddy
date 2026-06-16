@@ -86,10 +86,27 @@ function Index() {
 
   const downloadTimetableImage = async () => {
     if (!tableRef.current || !student) return;
-    const dataUrl = await toPng(tableRef.current, {
+    const node = tableRef.current;
+    const table = node.querySelector("table");
+    const fullWidth = Math.max(
+      node.scrollWidth,
+      table ? (table as HTMLElement).scrollWidth : 0,
+    );
+    const fullHeight = Math.max(
+      node.scrollHeight,
+      table ? (table as HTMLElement).scrollHeight : 0,
+    );
+    const dataUrl = await toPng(node, {
       pixelRatio: 2,
       backgroundColor: "#ffffff",
       cacheBust: true,
+      width: fullWidth,
+      height: fullHeight,
+      style: {
+        width: `${fullWidth}px`,
+        height: `${fullHeight}px`,
+        overflow: "visible",
+      },
     });
     const a = document.createElement("a");
     a.href = dataUrl;
