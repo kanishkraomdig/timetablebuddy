@@ -99,22 +99,23 @@ function Index() {
 
   const downloadICS = () => {
     if (!student) return;
-    // Parse "8:30-10:00 AM" / "12:00-1:30 PM" → [start24, end24]
+    // Parse "8:30-10:00 AM" / "12:00-1:30 PM" / "5:45–7:15 PM" → [start24, end24]
     const parseTime = (t: string): [string, string] => {
-      const m = t.match(/^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+      const norm = t.replace(/[–—]/g, "-");
+      const m = norm.match(/^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
       if (!m) return ["090000", "100000"];
-      let sh = +m[1], sm = +m[2], eh = +m[3], em = +m[4];
+      const sh = +m[1], sm = +m[2], ehRaw = +m[3], em = +m[4];
       const pm = m[5].toUpperCase() === "PM";
-      // End uses meridiem
-      if (pm && eh !== 12) eh += 12;
-      if (!pm && eh === 12) eh = 0;
-      // Start: assume same meridiem; if start hour > end hour numerically, flip
-      let spm = pm;
-      if (sh > +m[3]) spm = !pm;
-      if (spm && sh !== 12) sh += 12;
-      if (!spm && sh === 12) sh = 0;
+      const to24 = (h: number, isPm: boolean) => {
+        if (isPm) return h === 12 ? 12 : h + 12;
+        return h === 12 ? 0 : h;
+      };
+      const eh = to24(ehRaw, pm);
+      // Start: try same meridiem; if that puts start >= end, flip.
+      let sh24 = to24(sh, pm);
+      if (sh24 * 60 + sm >= eh * 60 + em) sh24 = to24(sh, !pm);
       const pad = (n: number) => String(n).padStart(2, "0");
-      return [`${pad(sh)}${pad(sm)}00`, `${pad(eh)}${pad(em)}00`];
+      return [`${pad(sh24)}${pad(sm)}00`, `${pad(eh)}${pad(em)}00`];
     };
 
     const dayMap: Record<string, { js: number; by: string }> = {
