@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { toPng } from "html-to-image";
 import timetableData from "@/data/timetable.json";
 
 type Session = {
@@ -43,6 +44,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [input, setInput] = useState("");
   const [roll, setRoll] = useState<string | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const student = roll ? data.students[roll] : null;
 
@@ -78,6 +80,114 @@ function Index() {
     const a = document.createElement("a");
     a.href = url;
     a.download = "subject-section-rolls.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadTimetableImage = async () => {
+    if (!tableRef.current || !student) return;
+    const dataUrl = await toPng(tableRef.current, {
+      pixelRatio: 2,
+      backgroundColor: "#ffffff",
+      cacheBust: true,
+    });
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `timetable-${roll}.png`;
+    a.click();
+  };
+
+  const downloadICS = () => {
+    if (!student) return;
+    // Parse "8:30-10:00 AM" / "12:00-1:30 PM" → [start24, end24]
+    const parseTime = (t: string): [string, string] => {
+      const m = t.match(/^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+      if (!m) return ["090000", "100000"];
+      let sh = +m[1], sm = +m[2], eh = +m[3], em = +m[4];
+      const pm = m[5].toUpperCase() === "PM";
+      // End uses meridiem
+      if (pm && eh !== 12) eh += 12;
+      if (!pm && eh === 12) eh = 0;
+      // Start: assume same meridiem; if start hour > end hour numerically, flip
+      let spm = pm;
+      if (sh > +m[3]) spm = !pm;
+      if (spm && sh !== 12) sh += 12;
+      if (!spm && sh === 12) sh = 0;
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return [`${pad(sh)}${pad(sm)}00`, `${pad(eh)}${pad(em)}00`];
+    };
+
+    const dayMap: Record<string, { js: number; by: string }> = {
+      Monday: { js: 1, by: "MO" },
+      Tuesday: { js: 2, by: "TU" },
+      Wednesday: { js: 3, by: "WE" },
+      Thursday: { js: 4, by: "TH" },
+      Friday: { js: 5, by: "FR" },
+      Saturday: { js: 6, by: "SA" },
+    };
+
+    // Start from today (16 Jun 2026)
+    const start = new Date(2026, 5, 16); // Jun=5, Tue
+    const fmtDate = (d: Date) =>
+      `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+
+    const lines: string[] = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//PGDM T4//Timetable//EN",
+      "CALSCALE:GREGORIAN",
+      "BEGIN:VTIMEZONE",
+      "TZID:Asia/Kolkata",
+      "BEGIN:STANDARD",
+      "DTSTART:19700101T000000",
+      "TZOFFSETFROM:+0530",
+      "TZOFFSETTO:+0530",
+      "TZNAME:IST",
+      "END:STANDARD",
+      "END:VTIMEZONE",
+    ];
+
+    const dtstamp =
+      new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+
+    const esc = (s: string) =>
+      s.replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
+
+    mySessions.forEach((s, idx) => {
+      const dm = dayMap[s.day];
+      if (!dm) return;
+      const slot = data.slots[s.slotIdx];
+      if (!slot) return;
+      const [stime, etime] = parseTime(slot.time);
+      // first occurrence on/after start matching weekday
+      const first = new Date(start);
+      while (first.getDay() !== dm.js) first.setDate(first.getDate() + 1);
+      const dateStr = fmtDate(first);
+      const subjectName = data.subjectNames[s.subject] ?? s.subject;
+      const summary = `${s.subject}${s.section ? ` (Sec ${s.section})` : ""} — ${subjectName}`;
+      const desc = [s.faculty ? `Faculty: ${s.faculty}` : "", `Raw: ${s.raw}`]
+        .filter(Boolean).join("\\n");
+      lines.push(
+        "BEGIN:VEVENT",
+        `UID:${roll}-${idx}-${dateStr}@pgdm-timetable`,
+        `DTSTAMP:${dtstamp}`,
+        `DTSTART;TZID=Asia/Kolkata:${dateStr}T${stime}`,
+        `DTEND;TZID=Asia/Kolkata:${dateStr}T${etime}`,
+        `RRULE:FREQ=WEEKLY;BYDAY=${dm.by};UNTIL=20260831T235959Z`,
+        `SUMMARY:${esc(summary)}`,
+        s.room ? `LOCATION:${esc(s.room)}` : "",
+        desc ? `DESCRIPTION:${desc}` : "",
+        "END:VEVENT",
+      );
+    });
+    lines.push("END:VCALENDAR");
+
+    const ics = lines.filter(Boolean).join("\r\n");
+    const blob = new Blob([ics], { type: "text/calendar" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `timetable-${roll}.ics`;
     a.click();
     URL.revokeObjectURL(url);
   };
