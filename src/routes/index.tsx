@@ -86,10 +86,27 @@ function Index() {
 
   const downloadTimetableImage = async () => {
     if (!tableRef.current || !student) return;
-    const dataUrl = await toPng(tableRef.current, {
+    const node = tableRef.current;
+    const table = node.querySelector("table");
+    const fullWidth = Math.max(
+      node.scrollWidth,
+      table ? (table as HTMLElement).scrollWidth : 0,
+    );
+    const fullHeight = Math.max(
+      node.scrollHeight,
+      table ? (table as HTMLElement).scrollHeight : 0,
+    );
+    const dataUrl = await toPng(node, {
       pixelRatio: 2,
       backgroundColor: "#ffffff",
       cacheBust: true,
+      width: fullWidth,
+      height: fullHeight,
+      style: {
+        width: `${fullWidth}px`,
+        height: `${fullHeight}px`,
+        overflow: "visible",
+      },
     });
     const a = document.createElement("a");
     a.href = dataUrl;
@@ -266,13 +283,6 @@ function Index() {
             className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
           >
             Show my timetable
-          </button>
-          <button
-            type="button"
-            onClick={downloadSubjectRollList}
-            className="rounded-md border border-border bg-secondary px-5 py-2 text-sm font-semibold text-secondary-foreground transition hover:opacity-90"
-          >
-            Download subject roll list
           </button>
         </form>
 
