@@ -284,13 +284,6 @@ function Index() {
           >
             Show my timetable
           </button>
-          <button
-            type="button"
-            onClick={downloadSubjectRollList}
-            className="rounded-md border border-border bg-secondary px-5 py-2 text-sm font-semibold text-secondary-foreground transition hover:opacity-90"
-          >
-            Download subject roll list
-          </button>
         </form>
 
         {roll && !student && (
