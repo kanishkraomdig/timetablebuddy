@@ -315,7 +315,24 @@ function Index() {
               ))}
             </ul>
 
-            <div className="mt-6 overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={downloadTimetableImage}
+                className="rounded-md border border-border bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:opacity-90"
+              >
+                Download as image
+              </button>
+              <button
+                type="button"
+                onClick={downloadICS}
+                className="rounded-md border border-border bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:opacity-90"
+              >
+                Download calendar (.ics)
+              </button>
+            </div>
+
+            <div ref={tableRef} className="mt-6 overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
               <table className="w-full min-w-[900px] border-collapse text-sm">
                 <thead>
                   <tr className="bg-muted/60 text-left">
