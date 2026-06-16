@@ -86,28 +86,52 @@ function Index() {
 
   const downloadTimetableImage = async () => {
     if (!tableRef.current || !student) return;
-    const node = tableRef.current;
-    const table = node.querySelector("table");
-    const fullWidth = Math.max(
-      node.scrollWidth,
-      table ? (table as HTMLElement).scrollWidth : 0,
-    );
-    const fullHeight = Math.max(
-      node.scrollHeight,
-      table ? (table as HTMLElement).scrollHeight : 0,
-    );
-    const dataUrl = await toPng(node, {
+
+    const original = tableRef.current;
+    const table = original.querySelector("table");
+    if (!table) return;
+
+    // Clone into an off-screen wrapper so mobile overflow-x-auto
+    // and viewport width constraints don't clip the capture.
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "fixed";
+    wrapper.style.top = "0";
+    wrapper.style.left = "-9999px";
+    wrapper.style.overflow = "visible";
+    wrapper.style.width = "auto";
+    wrapper.style.height = "auto";
+    wrapper.style.backgroundColor = "#ffffff";
+    wrapper.style.padding = "16px";
+    wrapper.style.borderRadius = "12px";
+    wrapper.style.border = "1px solid #e5e7eb";
+
+    // Title block
+    const title = document.createElement("div");
+    title.style.fontFamily = "system-ui, -apple-system, sans-serif";
+    title.style.fontSize = "18px";
+    title.style.fontWeight = "700";
+    title.style.marginBottom = "12px";
+    title.style.color = "#111827";
+    title.textContent = `${student.name} — ${roll}`;
+    wrapper.appendChild(title);
+
+    // Clone table and let it size naturally to its full width/height
+    const clone = table.cloneNode(true) as HTMLTableElement;
+    clone.style.minWidth = "auto";
+    clone.style.width = "auto";
+    wrapper.appendChild(clone);
+
+    document.body.appendChild(wrapper);
+    await new Promise((r) => setTimeout(r, 100));
+
+    const dataUrl = await toPng(wrapper, {
       pixelRatio: 2,
       backgroundColor: "#ffffff",
       cacheBust: true,
-      width: fullWidth,
-      height: fullHeight,
-      style: {
-        width: `${fullWidth}px`,
-        height: `${fullHeight}px`,
-        overflow: "visible",
-      },
     });
+
+    document.body.removeChild(wrapper);
+
     const a = document.createElement("a");
     a.href = dataUrl;
     a.download = `timetable-${roll}.png`;
